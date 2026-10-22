@@ -17,3 +17,8 @@ PLAYER_X = 150                      # игрок стоит на одном ме
 PLAYER_START_Y = 300                # начальная высота игрока
 
 PLAYER_GRAVITY = 0.8                # сила притяжения
+PLAYER_JUMP_POWER = -14             # сила прыжка; минус — вверх
+PLAYER_MAX_FALL_SPEED = 20          # максимальная скорость падения
+
+GROUND_HEIGHT = 80                              # толщина земли
+GROUND_Y = HEIGHT - GROUND_HEIGHT               # верхняя граница земли

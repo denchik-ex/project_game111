@@ -22,3 +22,6 @@ PLAYER_MAX_FALL_SPEED = 20          # максимальная скорость 
 
 GROUND_HEIGHT = 80                              # толщина земли
 GROUND_Y = HEIGHT - GROUND_HEIGHT               # верхняя граница земли
+
+OBSTACLE_SIZE = 40
+OBSTACLE_SPEED = 5

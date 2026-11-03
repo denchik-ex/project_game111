@@ -1,3 +1,5 @@
+from enum import Enum, auto
+
 import pygame
 
 from src.settings import (
@@ -11,80 +13,127 @@ from src.settings import (
 from src.window import Window
 from src.player import Player
 from src.obstacles import Obstacle
+from src.ui import UI
+
+
+class GameState(Enum):
+    """Возможные состояния игры."""
+
+    MENU = auto()
+    PLAYING = auto()
+    GAME_OVER = auto()
 
 
 class Game:
-    """Главный класс игры: игровой цикл, игрок и препятствия."""
+    """Управляет игровым циклом и переключением экранов."""
 
     def __init__(self):
         pygame.init()
+
         self.window = Window()
         self.clock = pygame.time.Clock()
+        self.ui = UI()
 
         self.player = Player()
         self.obstacles = []
-
         self.spawn_timer = 0
+
+        self.state = GameState.MENU
         self.running = True
 
+    def start_game(self):
+        """Сбрасывает игровую попытку и начинает новую."""
+        self.player = Player()
+        self.obstacles.clear()
+        self.spawn_timer = 0
+        self.state = GameState.PLAYING
+
     def handle_events(self):
-        """Обрабатывает закрытие окна и прыжок."""
+        """Обрабатывает события в зависимости от текущего экрана."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                return
 
             if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_SPACE, pygame.K_UP):
-                    self.player.jump()
+                self.handle_key(event.key)
+
+    def handle_key(self, key):
+        """Обрабатывает нажатие клавиши."""
+        if self.state == GameState.MENU:
+            if key == pygame.K_RETURN:
+                self.start_game()
+            elif key == pygame.K_ESCAPE:
+                self.running = False
+
+        elif self.state == GameState.PLAYING:
+            if key in (pygame.K_SPACE, pygame.K_UP):
+                self.player.jump()
+            elif key == pygame.K_ESCAPE:
+                self.state = GameState.MENU
+
+        elif self.state == GameState.GAME_OVER:
+            if key == pygame.K_r:
+                self.start_game()
+            elif key == pygame.K_ESCAPE:
+                self.state = GameState.MENU
 
     def spawn_obstacle(self):
-        """Создаёт новое препятствие справа за экраном."""
-        self.obstacles.append(Obstacle(WIDTH + 50))
+        """Создаёт препятствие сразу за правым краем окна."""
+        self.obstacles.append(Obstacle(WIDTH))
 
     def update(self):
-        """Обновляет игрока, препятствия и проверяет столкновения."""
+        """Обновляет мир только во время игры."""
+        if self.state != GameState.PLAYING:
+            return
+
         self.player.update()
 
-        # Создаём препятствия через равные промежутки времени
         self.spawn_timer += 1
 
         if self.spawn_timer >= OBSTACLE_SPAWN_DELAY:
             self.spawn_timer = 0
             self.spawn_obstacle()
 
-        # Двигаем препятствия
         for obstacle in self.obstacles:
             obstacle.update()
 
-        # Удаляем препятствия, которые уехали за экран
         self.obstacles = [
             obstacle
             for obstacle in self.obstacles
             if not obstacle.is_off_screen()
         ]
 
-        # Проверяем столкновение игрока с препятствиями
         for obstacle in self.obstacles:
             if self.player.rect.colliderect(obstacle.rect):
-                self.running = False
+                # Заканчиваем попытку, но не закрываем окно.
+                self.state = GameState.GAME_OVER
+                break
 
-    def draw(self):
-        """Рисует текущий кадр."""
-        self.window.clear()
-
-        # Земля
+    def draw_world(self):
+        """Рисует землю, препятствия и игрока."""
         pygame.draw.rect(
             self.window.screen,
             GROUND_COLOR,
-            (0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y)
+            (0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y),
         )
 
-        # Препятствия
         for obstacle in self.obstacles:
             obstacle.draw(self.window.screen)
 
-        # Игрок
         self.player.draw(self.window.screen)
+
+    def draw(self):
+        """Рисует экран текущего состояния."""
+        self.window.clear()
+
+        if self.state == GameState.MENU:
+            self.ui.draw_menu(self.window.screen)
+        else:
+            self.draw_world()
+
+            if self.state == GameState.GAME_OVER:
+                self.ui.draw_game_over(self.window.screen)
 
         self.window.update()
 
@@ -92,6 +141,11 @@ class Game:
         """Главный игровой цикл."""
         while self.running:
             self.handle_events()
+
+            # После команды выхода больше не обновляем игру.
+            if not self.running:
+                break
+
             self.update()
             self.draw()
             self.clock.tick(FPS)

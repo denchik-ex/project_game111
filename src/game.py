@@ -1,5 +1,3 @@
-from enum import Enum, auto
-
 import pygame
 
 from src.settings import (
@@ -8,95 +6,112 @@ from src.settings import (
     HEIGHT,
     GROUND_Y,
     GROUND_COLOR,
+    TEXT_COLOR,
+    OBSTACLE_SPEED,
     OBSTACLE_SPAWN_DELAY,
+    LEVEL_LENGTH,
+    FONT_SIZE,
+    HUD_MARGIN,
 )
 from src.window import Window
 from src.player import Player
 from src.obstacles import Obstacle
-from src.ui import UI
-
-
-class GameState(Enum):
-    """Возможные состояния игры."""
-
-    MENU = auto()
-    PLAYING = auto()
-    GAME_OVER = auto()
+from src.progress import Progress
 
 
 class Game:
-    """Управляет игровым циклом и переключением экранов."""
+    """Управляет игрой, меню и прохождением уровня."""
 
     def __init__(self):
         pygame.init()
 
         self.window = Window()
         self.clock = pygame.time.Clock()
-        self.ui = UI()
+        self.font = pygame.font.SysFont("arial", FONT_SIZE)
+        self.progress = Progress()
 
         self.player = Player()
         self.obstacles = []
         self.spawn_timer = 0
+        self.distance = 0
 
-        self.state = GameState.MENU
+        self.state = "menu"
         self.running = True
 
-    def start_game(self):
-        """Сбрасывает игровую попытку и начинает новую."""
+    def get_percent(self):
+        """Возвращает целый процент прохождения от 0 до 100."""
+        return min(100, self.distance * 100 // LEVEL_LENGTH)
+
+    def restart(self):
+        """Сбрасывает текущую попытку, но сохраняет рекорд."""
         self.player = Player()
         self.obstacles.clear()
         self.spawn_timer = 0
-        self.state = GameState.PLAYING
+        self.distance = 0
+        self.state = "playing"
+
+    def finish_attempt(self, state):
+        """Заканчивает попытку и сохраняет результат."""
+        self.progress.save(self.get_percent())
+        self.state = state
 
     def handle_events(self):
-        """Обрабатывает события в зависимости от текущего экрана."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.progress.save(self.get_percent())
                 self.running = False
                 return
 
-            if event.type == pygame.KEYDOWN:
-                self.handle_key(event.key)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if self.state == "menu":
+                        self.running = False
+                    else:
+                        self.finish_attempt("menu")
 
-    def handle_key(self, key):
-        """Обрабатывает нажатие клавиши."""
-        if self.state == GameState.MENU:
-            if key == pygame.K_RETURN:
-                self.start_game()
-            elif key == pygame.K_ESCAPE:
-                self.running = False
+                elif self.state == "menu":
+                    if event.key == pygame.K_RETURN:
+                        self.restart()
 
-        elif self.state == GameState.PLAYING:
-            if key in (pygame.K_SPACE, pygame.K_UP):
-                self.player.jump()
-            elif key == pygame.K_ESCAPE:
-                self.state = GameState.MENU
+                elif self.state == "playing":
+                    if event.key in (pygame.K_SPACE, pygame.K_UP):
+                        self.player.jump()
 
-        elif self.state == GameState.GAME_OVER:
-            if key == pygame.K_r:
-                self.start_game()
-            elif key == pygame.K_ESCAPE:
-                self.state = GameState.MENU
-
-    def spawn_obstacle(self):
-        """Создаёт препятствие сразу за правым краем окна."""
-        self.obstacles.append(Obstacle(WIDTH))
+                elif self.state in ("game_over", "victory"):
+                    if event.key == pygame.K_r:
+                        self.restart()
 
     def update(self):
-        """Обновляет мир только во время игры."""
-        if self.state != GameState.PLAYING:
+        if self.state != "playing":
             return
 
         self.player.update()
 
+        # Препятствия движутся — значит, игрок проходит расстояние.
+        self.distance = min(
+            self.distance + OBSTACLE_SPEED,
+            LEVEL_LENGTH,
+        )
+
         self.spawn_timer += 1
+
+        # Не создаём препятствия, которые не успеют доехать
+        # до игрока до конца уровня.
+        remaining_distance = LEVEL_LENGTH - self.distance
+        distance_to_player = WIDTH - self.player.rect.right
 
         if self.spawn_timer >= OBSTACLE_SPAWN_DELAY:
             self.spawn_timer = 0
-            self.spawn_obstacle()
+
+            if remaining_distance > distance_to_player:
+                self.obstacles.append(Obstacle(WIDTH))
 
         for obstacle in self.obstacles:
             obstacle.update()
+
+            if self.player.rect.colliderect(obstacle.rect):
+                self.finish_attempt("game_over")
+                return
 
         self.obstacles = [
             obstacle
@@ -104,14 +119,23 @@ class Game:
             if not obstacle.is_off_screen()
         ]
 
-        for obstacle in self.obstacles:
-            if self.player.rect.colliderect(obstacle.rect):
-                # Заканчиваем попытку, но не закрываем окно.
-                self.state = GameState.GAME_OVER
-                break
+        if self.distance >= LEVEL_LENGTH:
+            self.finish_attempt("victory")
+
+    def draw_text(self, lines):
+        """Рисует несколько строк по центру окна."""
+        line_height = self.font.get_linesize()
+        start_y = HEIGHT // 2 - len(lines) * line_height // 2
+
+        for index, line in enumerate(lines):
+            image = self.font.render(line, True, TEXT_COLOR)
+            rect = image.get_rect(
+                midtop=(WIDTH // 2, start_y + index * line_height)
+            )
+            self.window.screen.blit(image, rect)
 
     def draw_world(self):
-        """Рисует землю, препятствия и игрока."""
+        """Рисует землю, препятствия, игрока и прогресс."""
         pygame.draw.rect(
             self.window.screen,
             GROUND_COLOR,
@@ -123,26 +147,57 @@ class Game:
 
         self.player.draw(self.window.screen)
 
+        current = self.get_percent()
+        best = max(current, self.progress.best)
+
+        image = self.font.render(
+            f"Прогресс: {current}%   Рекорд: {best}%",
+            True,
+            TEXT_COLOR,
+        )
+        self.window.screen.blit(
+            image,
+            (HUD_MARGIN, HUD_MARGIN),
+        )
+
     def draw(self):
-        """Рисует экран текущего состояния."""
         self.window.clear()
 
-        if self.state == GameState.MENU:
-            self.ui.draw_menu(self.window.screen)
+        if self.state == "menu":
+            self.draw_text([
+                "Geometry Dash",
+                f"Рекорд: {self.progress.best}%",
+                "",
+                "Enter — начать игру",
+                "Пробел / стрелка вверх — прыжок",
+                "Esc — выход",
+            ])
+
+        elif self.state in ("game_over", "victory"):
+            title = (
+                "Уровень пройден!"
+                if self.state == "victory"
+                else "Поражение!"
+            )
+
+            self.draw_text([
+                title,
+                f"Пройдено: {self.get_percent()}%",
+                f"Рекорд: {self.progress.best}%",
+                "",
+                "R — попробовать снова",
+                "Esc — главное меню",
+            ])
+
         else:
             self.draw_world()
-
-            if self.state == GameState.GAME_OVER:
-                self.ui.draw_game_over(self.window.screen)
 
         self.window.update()
 
     def run(self):
-        """Главный игровой цикл."""
         while self.running:
             self.handle_events()
 
-            # После команды выхода больше не обновляем игру.
             if not self.running:
                 break
 

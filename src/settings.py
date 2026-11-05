@@ -31,3 +31,13 @@ OBSTACLE_SPAWN_DELAY = 90
 MENU_TITLE_SIZE = 56
 MENU_TEXT_SIZE = 30
 MENU_LINE_GAP = 48
+
+# Уровень
+LEVEL_LENGTH = 6000
+
+# Интерфейс
+FONT_SIZE = 30
+HUD_MARGIN = 20
+
+# Сохранение рекорда
+SAVE_FILENAME = "save.json"

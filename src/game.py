@@ -76,6 +76,12 @@ class Game:
                 elif self.state == "playing":
                     if event.key in (pygame.K_SPACE, pygame.K_UP):
                         self.player.jump()
+                    elif event.key == pygame.K_p:
+                        self.state = "paused"
+
+                elif self.state == "paused":
+                    if event.key == pygame.K_p:
+                        self.state = "playing"
 
                 elif self.state in ("game_over", "victory"):
                     if event.key == pygame.K_r:
@@ -191,6 +197,15 @@ class Game:
 
         else:
             self.draw_world()
+
+            if self.state == "paused":
+                self.draw_text([
+                    "Пауза",
+                    "",
+                    "P — продолжить",
+                    "Esc — главное меню",
+                ])
+
 
         self.window.update()
 

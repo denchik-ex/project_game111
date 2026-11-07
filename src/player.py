@@ -9,6 +9,10 @@ from src.settings import (
     PLAYER_MAX_FALL_SPEED,
     PLAYER_COLOR,
     GROUND_Y,
+    PLAYER_BORDER_COLOR,
+    PLAYER_INNER_COLOR,
+    PLAYER_CENTER_COLOR,
+    PLAYER_BORDER_WIDTH,
 )
 
 
@@ -51,5 +55,50 @@ class Player:
         self.rect.y = round(self.y)
         
     def draw(self, screen):
-        """Рисует игрока на экране."""
-        pygame.draw.rect(screen, PLAYER_COLOR, self.rect)
+        """Рисует кубик с контуром и вложенными квадратами."""
+        # Основной яркий квадрат
+        pygame.draw.rect(
+            screen,
+            PLAYER_COLOR,
+            self.rect,
+        )
+
+        # Внешний контур
+        pygame.draw.rect(
+            screen,
+            PLAYER_BORDER_COLOR,
+            self.rect,
+            PLAYER_BORDER_WIDTH,
+        )
+
+        # Тёмный квадрат внутри
+        inner_size = self.rect.width // 2
+        inner_rect = pygame.Rect(
+            0,
+            0,
+            inner_size,
+            inner_size,
+        )
+        inner_rect.center = self.rect.center
+
+        pygame.draw.rect(
+            screen,
+            PLAYER_INNER_COLOR,
+            inner_rect,
+        )
+
+        # Маленький голубой центр
+        center_size = self.rect.width // 4
+        center_rect = pygame.Rect(
+            0,
+            0,
+            center_size,
+            center_size,
+        )
+        center_rect.center = self.rect.center
+
+        pygame.draw.rect(
+            screen,
+            PLAYER_CENTER_COLOR,
+            center_rect,
+        )

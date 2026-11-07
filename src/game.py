@@ -130,11 +130,8 @@ class Game:
 
     def draw_world(self):
         """Рисует землю, препятствия, игрока и прогресс."""
-        pygame.draw.rect(
-            self.window.screen,
-            GROUND_COLOR,
-            (0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y),
-        )
+        self.window.draw_ground()
+       
 
         for obstacle in self.obstacles:
             obstacle.draw(self.window.screen)

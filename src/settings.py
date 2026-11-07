@@ -41,3 +41,13 @@ HUD_MARGIN = 20
 
 # Сохранение рекорда
 SAVE_FILENAME = "save.json"
+
+# Разновидности препятствий
+SPIKE_WIDTH = 30
+SPIKE_HEIGHT = 35
+
+BLOCK_WIDTH = 45
+BLOCK_HEIGHT = 50
+
+OBSTACLE_OUTLINE_COLOR = (255, 255, 255)
+OBSTACLE_OUTLINE_WIDTH = 2

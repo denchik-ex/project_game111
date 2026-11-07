@@ -8,7 +8,6 @@ from src.settings import (
     GROUND_COLOR,
     TEXT_COLOR,
     OBSTACLE_SPEED,
-    OBSTACLE_SPAWN_DELAY,
     LEVEL_LENGTH,
     FONT_SIZE,
     HUD_MARGIN,
@@ -17,6 +16,7 @@ from src.window import Window
 from src.player import Player
 from src.obstacles import Obstacle
 from src.progress import Progress
+from src.level import LEVEL_OBSTACLES
 
 
 class Game:
@@ -32,7 +32,6 @@ class Game:
 
         self.player = Player()
         self.obstacles = []
-        self.spawn_timer = 0
         self.distance = 0
 
         self.state = "menu"
@@ -43,10 +42,13 @@ class Game:
         return min(100, self.distance * 100 // LEVEL_LENGTH)
 
     def restart(self):
-        """Сбрасывает текущую попытку, но сохраняет рекорд."""
         self.player = Player()
-        self.obstacles.clear()
-        self.spawn_timer = 0
+
+        self.obstacles = [
+            Obstacle(x, kind)
+            for x, kind in LEVEL_OBSTACLES
+        ]
+
         self.distance = 0
         self.state = "playing"
 
@@ -93,24 +95,10 @@ class Game:
 
         self.player.update()
 
-        # Препятствия движутся — значит, игрок проходит расстояние.
         self.distance = min(
             self.distance + OBSTACLE_SPEED,
             LEVEL_LENGTH,
         )
-
-        self.spawn_timer += 1
-
-        # Не создаём препятствия, которые не успеют доехать
-        # до игрока до конца уровня.
-        remaining_distance = LEVEL_LENGTH - self.distance
-        distance_to_player = WIDTH - self.player.rect.right
-
-        if self.spawn_timer >= OBSTACLE_SPAWN_DELAY:
-            self.spawn_timer = 0
-
-            if remaining_distance > distance_to_player:
-                self.obstacles.append(Obstacle(WIDTH))
 
         for obstacle in self.obstacles:
             obstacle.update()

@@ -24,6 +24,8 @@ class Player:
             PLAYER_SIZE
         )
 
+        self.y = float(self.rect.y)
+
         self.speed_y = 0          # вертикальная скорость
         self.on_ground = False    # стоит ли игрок на земле
 
@@ -34,21 +36,20 @@ class Player:
             self.on_ground = False
 
     def update(self):
-        """Обновляет физику игрока: гравитацию и падение."""
-        self.speed_y += PLAYER_GRAVITY
+        self.speed_y = min(
+            self.speed_y + PLAYER_GRAVITY,
+            PLAYER_MAX_FALL_SPEED,
+        )
 
-        # Не даём игроку разгоняться вниз бесконечно
-        if self.speed_y > PLAYER_MAX_FALL_SPEED:
-            self.speed_y = PLAYER_MAX_FALL_SPEED
+        self.y += self.speed_y
 
-        self.rect.y += self.speed_y
-
-        # Если игрок достиг земли — останавливаем падение
-        if self.rect.bottom >= GROUND_Y:
-            self.rect.bottom = GROUND_Y
+        if self.y + self.rect.height >= GROUND_Y:
+            self.y = float(GROUND_Y - self.rect.height)
             self.speed_y = 0
             self.on_ground = True
 
+        self.rect.y = round(self.y)
+        
     def draw(self, screen):
         """Рисует игрока на экране."""
         pygame.draw.rect(screen, PLAYER_COLOR, self.rect)

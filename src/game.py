@@ -1,54 +1,31 @@
-import pygame
 from pathlib import Path
 
+import pygame
+
+from src.level import LEVEL_OBSTACLES
+from src.obstacles import Obstacle
+from src.player import Player
+from src.progress import Progress
 from src.settings import (
-    FPS,
-    WIDTH,
-    HEIGHT,
-    GROUND_Y,
-    GROUND_COLOR,
-    TEXT_COLOR,
-    OBSTACLE_SPEED,
-    LEVEL_LENGTH,
     FONT_SIZE,
+    FPS,
+    HEIGHT,
     HUD_MARGIN,
-    SOUND_VOLUME
+    LEVEL_LENGTH,
+    OBSTACLE_SPEED,
+    SOUND_VOLUME,
+    TEXT_COLOR,
+    WIDTH,
 )
 from src.window import Window
-from src.player import Player
-from src.obstacles import Obstacle
-from src.progress import Progress
-from src.level import LEVEL_OBSTACLES
 
 
 class Game:
-    """Управляет игрой, меню и прохождением уровня."""
-
     def __init__(self):
         pygame.init()
 
-        sounds_path = (
-            Path(__file__).resolve().parent.parent
-            / "sounds"
-        )
-
         self.sounds = {}
-
-        if pygame.mixer.get_init():
-            for name in ("jump", "fail", "victory"):
-                try:
-                    sound = pygame.mixer.Sound(
-                        str(sounds_path / f"{name}.mp3")
-                    )
-                    sound.set_volume(SOUND_VOLUME)
-                    self.sounds[name] = sound
-
-                except (pygame.error, OSError) as error:
-                    print(
-                        f"Не удалось загрузить звук {name}: {error}"
-                    )
-        else:
-            print("Звук недоступен: игра запущена без аудио.")
+        self.load_sounds()
 
         self.window = Window()
         self.clock = pygame.time.Clock()
@@ -62,9 +39,38 @@ class Game:
         self.state = "menu"
         self.running = True
 
+    def load_sounds(self):
+        if not pygame.mixer.get_init():
+            print("Звук недоступен: игра запущена без аудио.")
+            return
+
+        sounds_path = (
+            Path(__file__).resolve().parent.parent
+            / "sounds"
+        )
+
+        for name in ("jump", "fail", "victory"):
+            try:
+                sound = pygame.mixer.Sound(
+                    str(sounds_path / f"{name}.mp3")
+                )
+                sound.set_volume(SOUND_VOLUME)
+                self.sounds[name] = sound
+
+            except (pygame.error, OSError) as error:
+                print(f"Не удалось загрузить звук {name}: {error}")
+
+    def play_sound(self, name):
+        sound = self.sounds.get(name)
+
+        if sound is not None:
+            sound.play()
+
     def get_percent(self):
-        """Возвращает целый процент прохождения от 0 до 100."""
-        return min(100, self.distance * 100 // LEVEL_LENGTH)
+        return min(
+            100,
+            self.distance * 100 // LEVEL_LENGTH,
+        )
 
     def restart(self):
         self.player = Player()
@@ -77,14 +83,7 @@ class Game:
         self.distance = 0
         self.state = "playing"
 
-    def play_sound(self, name):
-        sound = self.sounds.get(name)
-
-        if sound is not None:
-            sound.play()
-
     def finish_attempt(self, state):
-        """Заканчивает попытку и сохраняет результат."""
         self.progress.save(self.get_percent())
         self.state = state
 
@@ -157,21 +156,22 @@ class Game:
             self.finish_attempt("victory")
 
     def draw_text(self, lines):
-        """Рисует несколько строк по центру окна."""
         line_height = self.font.get_linesize()
         start_y = HEIGHT // 2 - len(lines) * line_height // 2
 
         for index, line in enumerate(lines):
             image = self.font.render(line, True, TEXT_COLOR)
             rect = image.get_rect(
-                midtop=(WIDTH // 2, start_y + index * line_height)
+                midtop=(
+                    WIDTH // 2,
+                    start_y + index * line_height,
+                )
             )
+
             self.window.screen.blit(image, rect)
 
     def draw_world(self):
-        """Рисует землю, препятствия, игрока и прогресс."""
         self.window.draw_ground()
-       
 
         for obstacle in self.obstacles:
             obstacle.draw(self.window.screen)
@@ -186,6 +186,7 @@ class Game:
             True,
             TEXT_COLOR,
         )
+
         self.window.screen.blit(
             image,
             (HUD_MARGIN, HUD_MARGIN),
@@ -201,6 +202,7 @@ class Game:
                 "",
                 "Enter — начать игру",
                 "Пробел / стрелка вверх — прыжок",
+                "P — пауза",
                 "Esc — выход",
             ])
 
@@ -230,7 +232,6 @@ class Game:
                     "P — продолжить",
                     "Esc — главное меню",
                 ])
-
 
         self.window.update()
 

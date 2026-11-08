@@ -7,21 +7,21 @@ FPS = 60
 TITLE = "Geometry Dash — моя версия"
 
 BACKGROUND_COLOR = (35, 10, 65)
-GROUND_COLOR = (25, 10, 45)        # цвет земли
-PLAYER_COLOR = (110, 255, 60)        # цвет игрока
-OBSTACLE_COLOR = (255, 80, 80)      # цвет препятствий
-TEXT_COLOR = (255, 255, 255)        # цвет текста
+GROUND_COLOR = (25, 10, 45)        
+PLAYER_COLOR = (110, 255, 60)        
+OBSTACLE_COLOR = (255, 80, 80)      
+TEXT_COLOR = (255, 255, 255)        
 
-PLAYER_SIZE = 40                    # размер кубика игрока
-PLAYER_X = 150                      # игрок стоит на одном месте по X
-PLAYER_START_Y = 300                # начальная высота игрока
+PLAYER_SIZE = 40                    
+PLAYER_X = 150                      
+PLAYER_START_Y = 300                
 
-PLAYER_GRAVITY = 0.8                # сила притяжения
-PLAYER_JUMP_POWER = -14             # сила прыжка; минус — вверх
-PLAYER_MAX_FALL_SPEED = 20          # максимальная скорость падения
+PLAYER_GRAVITY = 0.8                
+PLAYER_JUMP_POWER = -14             
+PLAYER_MAX_FALL_SPEED = 20          
 
-GROUND_HEIGHT = 80                              # толщина земли
-GROUND_Y = HEIGHT - GROUND_HEIGHT               # верхняя граница земли
+GROUND_HEIGHT = 80                              
+GROUND_Y = HEIGHT - GROUND_HEIGHT              
 
 OBSTACLE_SIZE = 40
 OBSTACLE_SPEED = 5

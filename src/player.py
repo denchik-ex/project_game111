@@ -17,10 +17,8 @@ from src.settings import (
 
 
 class Player:
-    """Игрок-кубик: умеет прыгать, падать и рисоваться."""
 
     def __init__(self):
-        # Прямоугольник игрока: позиция и размер
         self.rect = pygame.Rect(
             PLAYER_X,
             PLAYER_START_Y,
@@ -30,11 +28,10 @@ class Player:
 
         self.y = float(self.rect.y)
 
-        self.speed_y = 0          # вертикальная скорость
+        self.speed_y = 0          
         self.on_ground = False    # стоит ли игрок на земле
 
     def jump(self):
-        """Заставляет игрока прыгнуть, если он стоит на земле."""
         if self.on_ground:
             self.speed_y = PLAYER_JUMP_POWER
             self.on_ground = False
@@ -55,15 +52,7 @@ class Player:
         self.rect.y = round(self.y)
         
     def draw(self, screen):
-        """Рисует кубик с контуром и вложенными квадратами."""
-        # Основной яркий квадрат
-        pygame.draw.rect(
-            screen,
-            PLAYER_COLOR,
-            self.rect,
-        )
-
-        # Внешний контур
+        pygame.draw.rect(screen,PLAYER_COLOR,self.rect,)
         pygame.draw.rect(
             screen,
             PLAYER_BORDER_COLOR,
@@ -71,34 +60,20 @@ class Player:
             PLAYER_BORDER_WIDTH,
         )
 
-        # Тёмный квадрат внутри
-        inner_size = self.rect.width // 2
-        inner_rect = pygame.Rect(
-            0,
-            0,
-            inner_size,
-            inner_size,
-        )
-        inner_rect.center = self.rect.center
+        x = self.rect.x
+        y = self.rect.y
+        size = self.rect.width
 
+        # Тёмный квадрат внутри кубика
         pygame.draw.rect(
             screen,
             PLAYER_INNER_COLOR,
-            inner_rect,
+            (x + size // 4, y + size // 4, size // 2, size // 2),
         )
 
-        # Маленький голубой центр
-        center_size = self.rect.width // 4
-        center_rect = pygame.Rect(
-            0,
-            0,
-            center_size,
-            center_size,
-        )
-        center_rect.center = self.rect.center
-
+        # Голубой квадрат в центре
         pygame.draw.rect(
             screen,
             PLAYER_CENTER_COLOR,
-            center_rect,
+            (x + size * 3 // 8, y + size * 3 // 8, size // 4, size // 4),
         )

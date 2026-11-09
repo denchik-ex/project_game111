@@ -20,7 +20,6 @@ LEVEL_OBSTACLES = BASE_OBSTACLES + [
     for x, kind in BASE_OBSTACLES
 ]
 
-# Дополнительные препятствия перед финишем
 LEVEL_OBSTACLES += [
     (10900, "block"),
     (11400, "double_spike"),

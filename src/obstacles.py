@@ -14,8 +14,6 @@ from src.settings import (
 
 
 class Obstacle:
-    """Шип, пара шипов или блок, которые нужно перепрыгнуть."""
-
     def __init__(self, x, kind):
         self.kind = kind
 

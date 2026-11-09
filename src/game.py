@@ -105,9 +105,7 @@ class Game:
         self.state = "playing"
 
         if self.music_loaded:
-            if self.music_started:
-                pygame.mixer.music.unpause()
-            else:
+                pygame.mixer.music.stop()
                 pygame.mixer.music.play(-1)
                 self.music_started = True
 
@@ -115,8 +113,8 @@ class Game:
         self.progress.save(self.get_percent())
         self.state = state
 
-        if self.music_loaded and self.music_started:
-            pygame.mixer.music.pause()
+        if self.music_loaded:
+            pygame.mixer.music.stop()
 
         if state == "game_over":
             self.play_sound("fail")
@@ -150,12 +148,19 @@ class Game:
 
                     elif event.key == pygame.K_p:
                         self.state = "paused"
+                        
                         if self.music_loaded:
                             pygame.mixer.music.pause()
 
                 elif self.state == "paused":
                     if event.key == pygame.K_p:
                         self.state = "playing"
+
+                        if self.music_loaded:
+                            if pygame.mixer.music.get_busy:
+                                pygame.mixer.music.unpause()
+                            else:
+                                pygame.mixer.music.play(-1)
 
                 elif self.state in ("game_over", "victory"):
                     if event.key == pygame.K_r:

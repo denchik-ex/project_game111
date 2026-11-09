@@ -33,7 +33,7 @@ class UI:
 
         self.draw_centered_text(
             screen,
-            "Geometry Dash",
+            "Neon Dash",
             self.title_font,
             center_y - MENU_LINE_GAP * 2,
         )

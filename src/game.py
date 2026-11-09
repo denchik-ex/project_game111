@@ -16,6 +16,7 @@ from src.settings import (
     SOUND_VOLUME,
     TEXT_COLOR,
     WIDTH,
+    MUSIC_VOLUME
 )
 from src.window import Window
 
@@ -26,6 +27,9 @@ class Game:
 
         self.sounds = {}
         self.load_sounds()
+        self.music_loaded = False
+        self.music_started = False
+        self.load_music()
 
         self.window = Window()
         self.clock = pygame.time.Clock()
@@ -41,7 +45,6 @@ class Game:
 
     def load_sounds(self):
         if not pygame.mixer.get_init():
-            print("Звук недоступен: игра запущена без аудио.")
             return
 
         sounds_path = (
@@ -57,8 +60,26 @@ class Game:
                 sound.set_volume(SOUND_VOLUME)
                 self.sounds[name] = sound
 
-            except (pygame.error, OSError) as error:
-                print(f"Не удалось загрузить звук {name}: {error}")
+            except (pygame.error, OSError)  :
+                pass
+
+    def load_music(self):
+        if not pygame.mixer.get_init():
+            return
+
+        music_path = (
+            Path(__file__).resolve().parent.parent
+            / "sounds"
+            / "music1.mp3"
+        )
+
+        try:
+            pygame.mixer.music.load(str(music_path))
+            pygame.mixer.music.set_volume(MUSIC_VOLUME)
+            self.music_loaded = True
+
+        except (pygame.error, OSError):
+            pass
 
     def play_sound(self, name):
         sound = self.sounds.get(name)
@@ -83,9 +104,19 @@ class Game:
         self.distance = 0
         self.state = "playing"
 
+        if self.music_loaded:
+            if self.music_started:
+                pygame.mixer.music.unpause()
+            else:
+                pygame.mixer.music.play(-1)
+                self.music_started = True
+
     def finish_attempt(self, state):
         self.progress.save(self.get_percent())
         self.state = state
+
+        if self.music_loaded and self.music_started:
+            pygame.mixer.music.pause()
 
         if state == "game_over":
             self.play_sound("fail")
@@ -119,6 +150,8 @@ class Game:
 
                     elif event.key == pygame.K_p:
                         self.state = "paused"
+                        if self.music_loaded:
+                            pygame.mixer.music.pause()
 
                 elif self.state == "paused":
                     if event.key == pygame.K_p:
@@ -197,7 +230,7 @@ class Game:
 
         if self.state == "menu":
             self.draw_text([
-                "Geometry Dash",
+                "Neon Dash",
                 f"Рекорд: {self.progress.best}%",
                 "",
                 "Enter — начать игру",

@@ -48,5 +48,5 @@ class Progress:
                     file,
                     indent=4,
                 )
-        except OSError as error:
-            print(f"Не удалось сохранить рекорд: {error}")
+        except OSError:
+            pass
